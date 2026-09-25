@@ -1,6 +1,6 @@
 /**
  * Whack It! - Child Friendly Fullscreen Web Game Engine
- * Features: Web Audio Synth BGM & SFX, Responsive Fullscreen Grid, Pause system.
+ * Features: Dual Responsive Engine (Mobile & Desktop), Web Audio Synth BGM & SFX, Pause System.
  */
 
 (function () {
@@ -34,9 +34,9 @@
   var overTitle = document.getElementById("overTitle");
 
   /* --------------------------------------------------------------------------
-     2. Layout & Responsive Fullscreen Grid
+     2. Dual Layout & Responsive Grid Engine (Mobile & Large Desktop Monitors)
      -------------------------------------------------------------------------- */
-  var W = 420, H = 750, scale = 1, offY = 0, dpr = 1;
+  var W = 420, H = 720, scale = 1, offX = 0, offY = 0, dpr = 1;
   var GRID_R = 3, GRID_C = 3;
   var gridTop = 100, gridBot = 700, cellW = 140, cellH = 180;
 
@@ -48,14 +48,31 @@
     canvas.width = Math.round(vw * dpr);
     canvas.height = Math.round(vh * dpr);
 
-    // Maintain canonical game width W (420) while adjusting H dynamically to fill screen aspect ratio
     W = 420;
-    H = Math.max(560, Math.min(1000, Math.round(W * vh / vw)));
 
-    scale = (vw * dpr) / W;
-    offY = (vh * dpr - H * scale) / 2;
+    if (vw / vh < 0.8) {
+      // Mobile portrait layout: fill full screen
+      H = Math.max(560, Math.min(1000, Math.round(W * vh / vw)));
+      scale = (vw * dpr) / W;
+      offX = 0;
+      offY = (vh * dpr - H * scale) / 2;
+    } else {
+      // Desktop / Tablet / Landscape layout: center stage gracefully
+      H = 720;
+      var aspect = W / H;
+      var targetH = Math.min(vh * 0.94, 850);
+      var targetW = targetH * aspect;
 
-    // Full screen grid area: top starts right under HUD (85px), bottom extends to near end (H - 30px)
+      if (targetW > vw * 0.95) {
+        targetW = vw * 0.95;
+        targetH = targetW / aspect;
+      }
+
+      scale = (targetW * dpr) / W;
+      offX = (vw * dpr - targetW * dpr) / 2;
+      offY = (vh * dpr - targetH * dpr) / 2;
+    }
+
     gridTop = H * 0.14;
     gridBot = H * 0.92;
     cellW = W / GRID_C;
@@ -114,7 +131,6 @@
     isBgmPlaying = true;
     bgmNoteStep = 0;
 
-    // Play a friendly synth note step every 180ms
     bgmInterval = setInterval(function () {
       if (!actx || !isBgmPlaying) return;
       var note = BGM_MELODY[bgmNoteStep % BGM_MELODY.length];
@@ -199,7 +215,6 @@
     } catch (e) {}
   }
 
-  // Audio Event SFX Suite
   var sfx = {
     whack: function () {
       playNoise(0.04, 0.1, 1400);
@@ -212,7 +227,6 @@
       playTone({ from: 1046.50, dur: 0.18, type: "sine", vol: 0.18, delay: 0.12 });
     },
     bad: function () {
-      // Funny child-friendly boing / oops tone
       playTone({ from: 300, to: 120, dur: 0.25, type: "sawtooth", vol: 0.15 });
       playTone({ from: 180, to: 90, dur: 0.3, type: "triangle", vol: 0.18, delay: 0.05 });
     },
@@ -472,7 +486,6 @@
     tclock += dt;
     var t = TIERS[tier];
 
-    // Check Level Up / Tier promotion
     var newTier = tierOf(score);
     if (newTier > tier) {
       tier = newTier;
@@ -481,7 +494,6 @@
       sfx.levelUp();
     }
 
-    // Spawn animals
     spawnTimer -= dt;
     if (spawnTimer <= 0 && activeCount() < t.maxC) {
       var empties = [];
@@ -500,7 +512,6 @@
       }
     }
 
-    // Update hole animals
     for (var j = 0; j < holes.length; j++) {
       var h = holes[j];
       h.t += dt;
@@ -520,7 +531,6 @@
       }
     }
 
-    // Update particles
     for (var p = particles.length - 1; p >= 0; p--) {
       var pt = particles[p];
       pt.x += pt.vx * dt * 60;
@@ -530,7 +540,6 @@
       if (pt.life <= 0) particles.splice(p, 1);
     }
 
-    // Update floaters
     for (var u = popups.length - 1; u >= 0; u--) {
       popups[u].y -= 0.8 * dt * 60;
       popups[u].life -= 0.022 * dt * 60;
@@ -572,13 +581,11 @@
      8. Canvas Renderer (Child Friendly Visuals)
      -------------------------------------------------------------------------- */
   function drawHole(h) {
-    // Hole shadow
     ctx.fillStyle = "rgba(0,0,0,0.18)";
     ctx.beginPath();
     ctx.ellipse(h.x, h.y + cellH * 0.12, cellW * 0.38, cellH * 0.2, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Dirt mound outer rim
     var g = ctx.createRadialGradient(h.x, h.y, 4, h.x, h.y, cellW * 0.38);
     g.addColorStop(0, "#734a26");
     g.addColorStop(0.7, "#543417");
@@ -588,7 +595,6 @@
     ctx.ellipse(h.x, h.y, cellW * 0.38, cellH * 0.22, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Dark tunnel interior
     ctx.fillStyle = "#1e1206";
     ctx.beginPath();
     ctx.ellipse(h.x, h.y, cellW * 0.28, cellH * 0.14, 0, 0, Math.PI * 2);
@@ -611,7 +617,6 @@
     var squish = h.state === "hit" ? Math.min(1, h.t / 0.15) : 0;
 
     ctx.save();
-    // Clip to hole horizon line
     ctx.beginPath();
     ctx.rect(h.x - cellW * 0.5, h.y - cellH * 0.7, cellW, cellH * 0.7 + 2);
     ctx.clip();
@@ -626,9 +631,7 @@
     var isBad = h.type === "bad";
     var isGold = h.type === "gold";
 
-    // Cute Ears
     if (isBad) {
-      // Pointy Raccoon / Fox ears
       ctx.fillStyle = "#595959";
       ctx.beginPath();
       ctx.moveTo(-r * 0.7, -r * 0.4); ctx.lineTo(-r * 0.9, -r * 1.1); ctx.lineTo(-r * 0.2, -r * 0.7);
@@ -637,17 +640,15 @@
       ctx.moveTo(r * 0.7, -r * 0.4); ctx.lineTo(r * 0.9, -r * 1.1); ctx.lineTo(r * 0.2, -r * 0.7);
       ctx.fill();
     } else {
-      // Soft round hamster ears
       ctx.fillStyle = isGold ? "#ffa940" : "#d48806";
       ctx.beginPath(); ctx.arc(-r * 0.75, -r * 0.65, r * 0.32, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(r * 0.75, -r * 0.65, r * 0.32, 0, Math.PI * 2); ctx.fill();
-      // Inner ear pink
+      
       ctx.fillStyle = "#ffadd2";
       ctx.beginPath(); ctx.arc(-r * 0.75, -r * 0.65, r * 0.18, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(r * 0.75, -r * 0.65, r * 0.18, 0, Math.PI * 2); ctx.fill();
     }
 
-    // Main Head Body
     var headGrad = ctx.createRadialGradient(-r * 0.3, -r * 0.3, 2, 0, 0, r * 1.1);
     if (isBad) {
       headGrad.addColorStop(0, "#8c8c8c");
@@ -664,62 +665,51 @@
     ctx.arc(0, 0, r, 0, Math.PI * 2);
     ctx.fill();
 
-    // Cute Cheeks & Muzzle
     if (!isBad) {
       ctx.fillStyle = "#fff1b8";
       ctx.beginPath();
       ctx.ellipse(0, r * 0.28, r * 0.65, r * 0.45, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Rosy blush dots
       ctx.fillStyle = "rgba(255, 120, 117, 0.55)";
       ctx.beginPath(); ctx.arc(-r * 0.55, r * 0.15, r * 0.2, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(r * 0.55, r * 0.15, r * 0.2, 0, Math.PI * 2); ctx.fill();
     } else {
-      // Raccoon black eye mask
       ctx.fillStyle = "#262626";
       ctx.beginPath();
       ctx.ellipse(0, -r * 0.1, r * 0.8, r * 0.35, 0, 0, Math.PI * 2);
       ctx.fill();
     }
 
-    // Eyes
     if (squish > 0.4) {
-      // Dizzy 'X X' expression when whacked
       ctx.strokeStyle = isBad ? "#ff4d4f" : "#262626";
       ctx.lineWidth = 3;
       ctx.lineCap = "round";
 
-      // Left eye X
       ctx.beginPath();
       ctx.moveTo(-r * 0.45, -r * 0.25); ctx.lineTo(-r * 0.2, -r * 0.05);
       ctx.moveTo(-r * 0.2, -r * 0.25); ctx.lineTo(-r * 0.45, -r * 0.05);
       ctx.stroke();
 
-      // Right eye X
       ctx.beginPath();
       ctx.moveTo(r * 0.2, -r * 0.25); ctx.lineTo(r * 0.45, -r * 0.05);
       ctx.moveTo(r * 0.45, -r * 0.25); ctx.lineTo(r * 0.2, -r * 0.05);
       ctx.stroke();
     } else {
-      // Big sparkling cartoon eyes
       ctx.fillStyle = isBad ? "#ff4d4f" : "#1f1f1f";
       ctx.beginPath(); ctx.arc(-r * 0.32, -r * 0.15, r * 0.16, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(r * 0.32, -r * 0.15, r * 0.16, 0, Math.PI * 2); ctx.fill();
 
-      // Eye highlight spark dots
       ctx.fillStyle = "#ffffff";
       ctx.beginPath(); ctx.arc(-r * 0.36, -r * 0.2, r * 0.06, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(r * 0.28, -r * 0.2, r * 0.06, 0, Math.PI * 2); ctx.fill();
     }
 
-    // Cute Nose & Mouth
     ctx.fillStyle = isBad ? "#141414" : "#ff85c0";
     ctx.beginPath();
     ctx.ellipse(0, r * 0.18, r * 0.12, r * 0.08, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Star Crown on Golden Hamster
     if (isGold) {
       ctx.fillStyle = "#fff0f6";
       ctx.font = (r * 0.8) + "px Fredoka, sans-serif";
@@ -736,26 +726,28 @@
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    // Dynamic background grass gradient
+    // Fullscreen backdrop gradient
     var bgGrad = ctx.createLinearGradient(0, 0, 0, vh);
     bgGrad.addColorStop(0, "#91d5ff");
-    bgGrad.addColorStop(0.3, "#bae7ff");
-    bgGrad.addColorStop(0.32, "#73d13d");
+    bgGrad.addColorStop(0.25, "#bae7ff");
+    bgGrad.addColorStop(0.27, "#73d13d");
     bgGrad.addColorStop(1, "#278003");
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, vw, vh);
 
-    // Apply scale and camera screen shake transform
+    // Apply scaling and camera screen shake offset
     ctx.setTransform(
       scale, 0, 0, scale,
-      (Math.random() - 0.5) * shake * 10 * scale,
+      offX + (Math.random() - 0.5) * shake * 10 * scale,
       offY + (Math.random() - 0.5) * shake * 10 * scale
     );
 
-    // Draw playfield wooden boundary board
+    // Playfield wooden board border
     ctx.fillStyle = "#432b16";
     roundRectPath(W * 0.04, gridTop - 25, W * 0.92, (gridBot - gridTop) + 50, 24);
     ctx.fill();
+
+    // Playfield grass/field interior
     ctx.fillStyle = "#5c3c1e";
     roundRectPath(W * 0.05, gridTop - 20, W * 0.9, (gridBot - gridTop) + 40, 20);
     ctx.fill();
@@ -785,13 +777,13 @@
     }
     ctx.globalAlpha = 1;
 
-    // Damage Red Flash Overlay
+    // Red Flash Overlay
     if (flashRed > 0) {
       ctx.fillStyle = "rgba(255,77,79," + (flashRed * 0.3) + ")";
       ctx.fillRect(0, 0, W, H);
     }
 
-    // Tier Level Up Banner Flash
+    // Tier Level Flash Banner
     if (tierFlash > 0) {
       ctx.globalAlpha = Math.min(1, tierFlash * 1.8);
       ctx.font = "700 26px Fredoka, sans-serif";
@@ -907,11 +899,11 @@
     resumeGame();
   });
 
-  // Pointer Canvas Tap Event
+  // Pointer Canvas Tap Event with Dual Mobile & Desktop Coordinate Translation
   function getCanvasCoords(e) {
     var rect = canvas.getBoundingClientRect();
     return {
-      x: ((e.clientX - rect.left) / rect.width) * W,
+      x: (((e.clientX - rect.left) * dpr) - offX) / scale,
       y: (((e.clientY - rect.top) * dpr) - offY) / scale
     };
   }
@@ -923,7 +915,7 @@
     e.preventDefault();
   });
 
-  // Keyboard controls
+  // Keyboard controls for Desktop users
   window.addEventListener("keydown", function (e) {
     if ((e.key === " " || e.key === "Enter") && state !== STATE_PLAY && state !== STATE_PAUSED) {
       startGame();

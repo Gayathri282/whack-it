@@ -1,12 +1,13 @@
 /* ==========================================================================
-   Whack It! - Child Friendly & Engaging CSS Design System
+   Whack It! - Child Friendly & Responsive CSS Design System
+   Dual Support for Mobile Devices & Large Desktop Monitors
    ========================================================================== */
 
 :root {
   --primary-font: "Fredoka", "Trebuchet MS", system-ui, -apple-system, sans-serif;
   --bg-grass-top: #73d13d;
   --bg-grass-bottom: #389e0d;
-  --card-bg: rgba(255, 255, 255, 0.94);
+  --card-bg: rgba(255, 255, 255, 0.95);
   --text-dark: #2c3e50;
   --text-muted: #595959;
   --accent-yellow: #ffc53d;
@@ -14,7 +15,7 @@
   --accent-pink: #ff4d4f;
   --accent-blue: #4096ff;
   --accent-green: #52c41a;
-  --shadow-color: rgba(0, 0, 0, 0.18);
+  --shadow-color: rgba(0, 0, 0, 0.22);
   --radius-lg: 28px;
   --radius-md: 18px;
   --radius-pill: 999px;
@@ -36,13 +37,13 @@ html, body {
   position: fixed;
   inset: 0;
   font-family: var(--primary-font);
-  background: linear-gradient(180deg, #87ceeb 0%, #a8e6cf 50%, #56ab2f 100%);
+  background: radial-gradient(circle at 50% 30%, #a8e6cf 0%, #56ab2f 60%, #2e7d32 100%);
   touch-action: none;
   overscroll-behavior: none;
 }
 
 /* --------------------------------------------------------------------------
-   Canvas (Full Screen Grid)
+   Canvas (Responsive Canvas Engine)
    -------------------------------------------------------------------------- */
 canvas#gameCanvas {
   position: fixed;
@@ -51,36 +52,37 @@ canvas#gameCanvas {
   height: 100%;
   display: block;
   z-index: 1;
+  cursor: pointer;
 }
 
 /* --------------------------------------------------------------------------
-   HUD Top Navigation Bar
+   HUD Top Navigation Bar (Mobile & Desktop Responsive)
    -------------------------------------------------------------------------- */
 .hud-container {
   position: fixed;
   top: max(12px, env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 24px);
-  max-width: 480px;
+  width: calc(100% - 32px);
+  max-width: 520px;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 3px solid rgba(255, 255, 255, 0.95);
   border-radius: var(--radius-pill);
-  box-shadow: 0 8px 24px var(--shadow-color), 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 28px var(--shadow-color), 0 3px 8px rgba(0,0,0,0.1);
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .hud-container.hidden {
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, -20px);
+  transform: translate(-50%, -24px);
 }
 
 .hud-item {
@@ -101,7 +103,7 @@ canvas#gameCanvas {
 }
 
 .hud-value {
-  font-size: 26px;
+  font-size: clamp(24px, 4vw, 32px);
   font-weight: 700;
   color: #262626;
   line-height: 1;
@@ -117,9 +119,9 @@ canvas#gameCanvas {
   color: #fff;
   font-size: 14px;
   font-weight: 700;
-  padding: 2px 10px;
+  padding: 3px 12px;
   border-radius: var(--radius-pill);
-  box-shadow: 0 3px 6px rgba(255, 122, 69, 0.35);
+  box-shadow: 0 4px 8px rgba(255, 122, 69, 0.35);
   display: inline-block;
   animation: pulseBeat 1.8s infinite ease-in-out;
 }
@@ -139,15 +141,15 @@ canvas#gameCanvas {
 }
 
 .heart-icon {
-  font-size: 22px;
+  font-size: clamp(20px, 3.5vw, 26px);
   display: inline-block;
   filter: drop-shadow(0 2px 4px rgba(255, 77, 79, 0.4));
-  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .heart-icon.lost {
   filter: grayscale(1) opacity(0.3);
-  transform: scale(0.8);
+  transform: scale(0.75);
 }
 
 /* --------------------------------------------------------------------------
@@ -161,9 +163,9 @@ canvas#gameCanvas {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.65) 100%);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.75) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   transition: opacity 0.3s ease;
 }
 
@@ -173,17 +175,17 @@ canvas#gameCanvas {
 
 .game-card {
   width: 100%;
-  max-width: 360px;
+  max-width: 440px;
   background: var(--card-bg);
   border-radius: var(--radius-lg);
-  padding: 30px 24px 26px;
+  padding: clamp(24px, 5vw, 36px) clamp(20px, 4vw, 30px);
   text-align: center;
   position: relative;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.28), inset 0 2px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.32), inset 0 2px 0 rgba(255, 255, 255, 0.9);
   border: 4px solid #ffffff;
 }
 
-/* Bouncy Keyframe Animations */
+/* Animations */
 .bounce-in {
   animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
 }
@@ -194,7 +196,7 @@ canvas#gameCanvas {
 
 @keyframes bounceIn {
   0% { opacity: 0; transform: scale(0.5) translateY(40px); }
-  60% { opacity: 1; transform: scale(1.05) translateY(-8px); }
+  60% { opacity: 1; transform: scale(1.04) translateY(-6px); }
   100% { transform: scale(1) translateY(0); }
 }
 
@@ -205,7 +207,7 @@ canvas#gameCanvas {
 
 @keyframes pulseBeat {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  50% { transform: scale(1.06); }
 }
 
 /* Card Badge */
@@ -219,25 +221,25 @@ canvas#gameCanvas {
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
-  padding: 5px 16px;
+  padding: 5px 18px;
   border-radius: var(--radius-pill);
-  box-shadow: 0 4px 10px rgba(56, 158, 13, 0.4);
+  box-shadow: 0 4px 12px rgba(56, 158, 13, 0.45);
   border: 2px solid #ffffff;
 }
 
 .orange-badge {
   background: linear-gradient(135deg, #ff7a45, #d4380d);
-  box-shadow: 0 4px 10px rgba(212, 56, 13, 0.4);
+  box-shadow: 0 4px 12px rgba(212, 56, 13, 0.45);
 }
 
 .blue-badge {
   background: linear-gradient(135deg, #4096ff, #0958d9);
-  box-shadow: 0 4px 10px rgba(9, 88, 217, 0.4);
+  box-shadow: 0 4px 12px rgba(9, 88, 217, 0.45);
 }
 
 /* Titles & Typography */
 .game-title {
-  font-size: 38px;
+  font-size: clamp(32px, 7vw, 44px);
   font-weight: 700;
   color: var(--text-dark);
   line-height: 1.1;
@@ -247,7 +249,7 @@ canvas#gameCanvas {
 }
 
 .game-subtitle {
-  font-size: 15px;
+  font-size: clamp(14px, 3vw, 16px);
   font-weight: 500;
   color: var(--text-muted);
   line-height: 1.45;
@@ -258,9 +260,9 @@ canvas#gameCanvas {
 .character-preview {
   display: flex;
   justify-content: space-around;
-  margin: 18px 0 24px;
-  padding: 12px;
-  background: rgba(240, 245, 255, 0.7);
+  margin: 18px 0 22px;
+  padding: 12px 8px;
+  background: rgba(240, 245, 255, 0.75);
   border-radius: var(--radius-md);
   border: 1px solid rgba(0, 0, 0, 0.05);
 }
@@ -273,15 +275,20 @@ canvas#gameCanvas {
 }
 
 .char-avatar {
-  width: 44px;
-  height: 44px;
+  width: clamp(40px, 8vw, 48px);
+  height: clamp(40px, 8vw, 48px);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+  font-size: clamp(20px, 4vw, 24px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.12);
   border: 2px solid #ffffff;
+  transition: transform 0.2s ease;
+}
+
+.char-avatar:hover {
+  transform: scale(1.15) rotate(6deg);
 }
 
 .hamster-bg { background: linear-gradient(135deg, #ffe7ba, #ffd591); }
@@ -294,22 +301,27 @@ canvas#gameCanvas {
   color: var(--text-dark);
 }
 
-/* Buttons */
+/* Buttons with Hover & Active States */
 .play-btn {
   width: 100%;
   font-family: inherit;
-  font-size: 20px;
+  font-size: clamp(18px, 4vw, 22px);
   font-weight: 700;
   color: #ffffff;
   background: linear-gradient(180deg, #ffc53d 0%, #ff7a45 100%);
   border: none;
   border-radius: var(--radius-pill);
-  padding: 16px 24px;
+  padding: 16px 28px;
   cursor: pointer;
   box-shadow: 0 6px 0 #d4380d, 0 12px 24px rgba(255, 122, 69, 0.4);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.15s ease;
   position: relative;
   overflow: hidden;
+}
+
+.play-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 #d4380d, 0 16px 28px rgba(255, 122, 69, 0.48);
 }
 
 .play-btn:active {
@@ -322,13 +334,39 @@ canvas#gameCanvas {
   box-shadow: 0 6px 0 #237804, 0 12px 24px rgba(56, 158, 13, 0.4);
 }
 
+.again-btn:hover {
+  box-shadow: 0 8px 0 #237804, 0 16px 28px rgba(56, 158, 13, 0.48);
+}
+
 .again-btn:active {
   box-shadow: 0 2px 0 #237804, 0 6px 12px rgba(56, 158, 13, 0.3);
 }
 
+/* Desktop Keyboard Hint */
+.desktop-hint {
+  margin-top: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+kbd {
+  background: #f0f0f0;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  color: #333;
+  display: inline-block;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 6px;
+}
+
 /* Game Over Card Details */
 .over-title {
-  font-size: 28px;
+  font-size: clamp(24px, 5vw, 32px);
   font-weight: 700;
   color: var(--text-dark);
   margin-top: 10px;
@@ -352,7 +390,7 @@ canvas#gameCanvas {
 }
 
 .final-score {
-  font-size: 52px;
+  font-size: clamp(44px, 10vw, 64px);
   font-weight: 700;
   color: #ad8b00;
   line-height: 1;
@@ -391,10 +429,44 @@ canvas#gameCanvas {
   display: inline-block;
 }
 
-/* Responsive Tweaks */
-@media (max-width: 360px) {
-  .game-card { padding: 24px 18px; }
-  .game-title { font-size: 32px; }
-  .final-score { font-size: 44px; }
-  .play-btn { font-size: 18px; padding: 14px 20px; }
+/* --------------------------------------------------------------------------
+   Desktop & Tablet Media Queries
+   -------------------------------------------------------------------------- */
+@media (min-width: 768px) {
+  .hud-container {
+    padding: 12px 28px;
+  }
+
+  .game-card {
+    max-width: 460px;
+  }
+}
+
+@media (max-height: 640px) {
+  .game-card {
+    padding: 18px 20px;
+  }
+
+  .game-title {
+    font-size: 28px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+  }
+
+  .game-subtitle {
+    margin-bottom: 12px;
+  }
+
+  .character-preview {
+    margin: 10px 0 14px;
+    padding: 8px;
+  }
+
+  .play-btn {
+    padding: 12px 20px;
+  }
+
+  .desktop-hint {
+    margin-top: 10px;
+  }
 }
