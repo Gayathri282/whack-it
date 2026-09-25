@@ -1,6 +1,6 @@
 /**
  * Whack It! - Child Friendly Fullscreen Web Game Engine
- * Features: Dual Responsive Engine (Mobile & Desktop), Web Audio Synth BGM & SFX, Pause System.
+ * Features: High-Precision Touch & Hit Detection, Dual Responsive Engine (Mobile & Desktop), Web Audio Synth BGM & SFX.
  */
 
 (function () {
@@ -94,7 +94,7 @@
   var isBgmPlaying = false;
   var bgmNoteStep = 0;
 
-  // Cheerful major pentatonic melody loop notes (C4, D4, E4, G4, A4, C5, D5, E5)
+  // Cheerful major pentatonic melody loop notes
   var BGM_MELODY = [
     261.63, 329.63, 392.00, 523.25,  392.00, 329.63, 261.63, 392.00,
     293.66, 349.23, 440.00, 587.33,  440.00, 349.23, 293.66, 440.00,
@@ -114,7 +114,7 @@
         masterGain.connect(actx.destination);
 
         bgmGain = actx.createGain();
-        bgmGain.gain.value = 0.08; // Soft background music volume
+        bgmGain.gain.value = 0.08;
         bgmGain.connect(masterGain);
       } catch (e) {
         actx = null;
@@ -389,8 +389,26 @@
   }
 
   /* --------------------------------------------------------------------------
-     6. User Input & Tap Mechanics
+     6. High-Precision Touch & Hit Detection Engine
      -------------------------------------------------------------------------- */
+  function creatureRise(h) {
+    var rise;
+    if (h.state === "rising") rise = h.t / 0.12;
+    else if (h.state === "up") rise = 1;
+    else if (h.state === "ducking") rise = 1 - h.t / 0.12;
+    else rise = Math.max(0, 1 - h.t / 0.30);
+    return Math.max(0, Math.min(1, rise));
+  }
+
+  function creatureCenter(h) {
+    var rise = creatureRise(h);
+    var popH = cellH * 0.55 * rise;
+    return {
+      x: h.x,
+      y: h.y - popH * 0.5
+    };
+  }
+
   function tapAt(x, y) {
     if (state !== STATE_PLAY || !alive) return;
 
@@ -399,12 +417,18 @@
 
     for (var i = 0; i < holes.length; i++) {
       var h = holes[i];
-      if (h.state !== "up") continue;
+      
+      // Allow hits when creature is up, rising, or early ducking
+      if (h.state !== "up" && h.state !== "rising" && h.state !== "ducking") continue;
+      if (h.state === "ducking" && h.t > 0.08) continue; // Ignore if almost fully subterranean
 
-      var dx = x - h.x;
-      var dy = y - h.y;
+      var cPos = creatureCenter(h);
+      var dx = x - cPos.x;
+      var dy = y - cPos.y;
       var dist = Math.sqrt(dx * dx + dy * dy);
-      var hitRadius = Math.min(cellW, cellH) * 0.44;
+
+      // Tuned hit radius matching the visual creature head & body
+      var hitRadius = Math.min(cellW, cellH) * 0.46;
 
       if (dist < hitRadius && dist < minDist) {
         minDist = dist;
@@ -604,13 +628,7 @@
   function drawCreature(h) {
     if (h.state === "empty") return;
 
-    var rise;
-    if (h.state === "rising") rise = h.t / 0.12;
-    else if (h.state === "up") rise = 1;
-    else if (h.state === "ducking") rise = 1 - h.t / 0.12;
-    else rise = Math.max(0, 1 - h.t / 0.30);
-    rise = Math.max(0, Math.min(1, rise));
-
+    var rise = creatureRise(h);
     var popH = cellH * 0.55 * rise;
     var cx = h.x;
     var cy = h.y - popH * 0.5;
@@ -643,7 +661,7 @@
       ctx.fillStyle = isGold ? "#ffa940" : "#d48806";
       ctx.beginPath(); ctx.arc(-r * 0.75, -r * 0.65, r * 0.32, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(r * 0.75, -r * 0.65, r * 0.32, 0, Math.PI * 2); ctx.fill();
-      
+
       ctx.fillStyle = "#ffadd2";
       ctx.beginPath(); ctx.arc(-r * 0.75, -r * 0.65, r * 0.18, 0, Math.PI * 2); ctx.fill();
       ctx.beginPath(); ctx.arc(r * 0.75, -r * 0.65, r * 0.18, 0, Math.PI * 2); ctx.fill();
@@ -899,21 +917,53 @@
     resumeGame();
   });
 
-  // Pointer Canvas Tap Event with Dual Mobile & Desktop Coordinate Translation
+  // Precise Canvas Coordinate Translation Helper (Supports Pointer, Touch, and Mouse)
   function getCanvasCoords(e) {
     var rect = canvas.getBoundingClientRect();
+    var clientX = e.clientX;
+    var clientY = e.clientY;
+
+    if (typeof clientX !== "number" && e.touches && e.touches.length > 0) {
+      clientX = e.touches[0].clientX;
+      clientY = e.touches[0].clientY;
+    }
+
+    var cssX = clientX - rect.left;
+    var cssY = clientY - rect.top;
+
     return {
-      x: (((e.clientX - rect.left) * dpr) - offX) / scale,
-      y: (((e.clientY - rect.top) * dpr) - offY) / scale
+      x: (((cssX * dpr) - offX) / scale),
+      y: (((cssY * dpr) - offY) / scale)
     };
   }
 
-  canvas.addEventListener("pointerdown", function (e) {
-    if (state !== STATE_PLAY) return;
-    var coords = getCanvasCoords(e);
-    tapAt(coords.x, coords.y);
-    e.preventDefault();
-  });
+  // Multi-Touch & Pointer Input Handlers
+  if (window.PointerEvent) {
+    canvas.addEventListener("pointerdown", function (e) {
+      if (state !== STATE_PLAY) return;
+      var coords = getCanvasCoords(e);
+      tapAt(coords.x, coords.y);
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+  } else {
+    canvas.addEventListener("touchstart", function (e) {
+      if (state !== STATE_PLAY) return;
+      if (e.changedTouches) {
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          var coords = getCanvasCoords(e.changedTouches[i]);
+          tapAt(coords.x, coords.y);
+        }
+      }
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
+
+    canvas.addEventListener("mousedown", function (e) {
+      if (state !== STATE_PLAY) return;
+      var coords = getCanvasCoords(e);
+      tapAt(coords.x, coords.y);
+      if (e.cancelable) e.preventDefault();
+    });
+  }
 
   // Keyboard controls for Desktop users
   window.addEventListener("keydown", function (e) {
