@@ -1,6 +1,6 @@
 /**
  * Whack It! - Child Friendly Fullscreen Web Game Engine
- * Features: High-Precision Touch & Hit Detection, Dual Responsive Engine (Mobile & Desktop), Web Audio Synth BGM & SFX.
+ * Combined Mode: Level Countdown Timer + Missed Hamster Escape Penalties + Raccoon Bombs.
  */
 
 (function () {
@@ -15,9 +15,12 @@
   // DOM Elements
   var hudEl = document.getElementById("hud");
   var scoreText = document.getElementById("scoreText");
-  var streakBadge = document.getElementById("streakBadge");
-  var streakText = document.getElementById("streakText");
+  var levelNameText = document.getElementById("levelNameText");
+  var timerText = document.getElementById("timerText");
+  var timerPill = document.querySelector(".timer-pill");
+  var goalText = document.getElementById("goalText");
   var livesContainer = document.getElementById("livesContainer");
+  var missText = document.getElementById("missText");
 
   var titleScreen = document.getElementById("titleScreen");
   var gameOverScreen = document.getElementById("gameOverScreen");
@@ -32,6 +35,7 @@
   var bestStreakText = document.getElementById("bestStreakText");
   var bestScoreText = document.getElementById("bestScoreText");
   var overTitle = document.getElementById("overTitle");
+  var overReasonText = document.getElementById("overReasonText");
 
   /* --------------------------------------------------------------------------
      2. Dual Layout & Responsive Grid Engine (Mobile & Large Desktop Monitors)
@@ -94,7 +98,6 @@
   var isBgmPlaying = false;
   var bgmNoteStep = 0;
 
-  // Cheerful major pentatonic melody loop notes
   var BGM_MELODY = [
     261.63, 329.63, 392.00, 523.25,  392.00, 329.63, 261.63, 392.00,
     293.66, 349.23, 440.00, 587.33,  440.00, 349.23, 293.66, 440.00,
@@ -230,6 +233,9 @@
       playTone({ from: 300, to: 120, dur: 0.25, type: "sawtooth", vol: 0.15 });
       playTone({ from: 180, to: 90, dur: 0.3, type: "triangle", vol: 0.18, delay: 0.05 });
     },
+    miss: function () {
+      playTone({ from: 220, to: 140, dur: 0.12, type: "sine", vol: 0.1 });
+    },
     streak: function () {
       var notes = [523.25, 659.25, 783.99, 1046.50];
       for (var i = 0; i < notes.length; i++) {
@@ -250,23 +256,15 @@
   };
 
   /* --------------------------------------------------------------------------
-     4. Game Difficulty Tiers
+     4. Level Tiers & Combined Mode Goals
      -------------------------------------------------------------------------- */
   var TIERS = [
-    { s: 0,   name: "Sunny Meadow 🌱", gap: [0.85, 1.3],  up: [1.1, 1.4], maxC: 1, bad: 0.1,  gold: 0.12 },
-    { s: 20,  name: "Bouncy Burrow 🐰", gap: [0.68, 1.05], up: [0.95, 1.2], maxC: 2, bad: 0.14, gold: 0.12 },
-    { s: 50,  name: "Starry Park ⭐",   gap: [0.52, 0.85], up: [0.75, 1.0], maxC: 2, bad: 0.18, gold: 0.14 },
-    { s: 100, name: "Rainbow Rush 🌈", gap: [0.42, 0.70], up: [0.60, 0.85], maxC: 3, bad: 0.22, gold: 0.15 },
-    { s: 180, name: "Super Whack! ⚡", gap: [0.32, 0.55], up: [0.48, 0.70], maxC: 3, bad: 0.25, gold: 0.15 }
+    { lvl: 1, name: "Sunny Meadow 🌱", target: 12, timeLimit: 45, maxMisses: 3, gap: [0.85, 1.3],  up: [1.1, 1.4], maxC: 1, bad: 0.1,  gold: 0.12 },
+    { lvl: 2, name: "Bouncy Burrow 🐰", target: 20, timeLimit: 40, maxMisses: 3, gap: [0.68, 1.05], up: [0.95, 1.2], maxC: 2, bad: 0.14, gold: 0.12 },
+    { lvl: 3, name: "Starry Park ⭐",   target: 28, timeLimit: 35, maxMisses: 3, gap: [0.52, 0.85], up: [0.75, 1.0], maxC: 2, bad: 0.18, gold: 0.14 },
+    { lvl: 4, name: "Rainbow Rush 🌈", target: 36, timeLimit: 30, maxMisses: 3, gap: [0.42, 0.70], up: [0.60, 0.85], maxC: 3, bad: 0.22, gold: 0.15 },
+    { lvl: 5, name: "Super Whack! ⚡", target: 45, timeLimit: 25, maxMisses: 3, gap: [0.32, 0.55], up: [0.48, 0.70], maxC: 3, bad: 0.25, gold: 0.15 }
   ];
-
-  function tierOf(scoreVal) {
-    var idx = 0;
-    for (var i = 0; i < TIERS.length; i++) {
-      if (scoreVal >= TIERS[i].s) idx = i;
-    }
-    return idx;
-  }
 
   /* --------------------------------------------------------------------------
      5. Game State & Logic Variables
@@ -296,6 +294,12 @@
   var flashRed = 0;
   var spawnTimer = 0;
 
+  // Combined Mode Level Variables
+  var levelTimer = 45;
+  var levelWhacked = 0;
+  var levelMisses = 0;
+  var gameOverReason = "Out of hearts! 💔";
+
   try {
     bestScore = parseInt(localStorage.getItem("whack_best_score") || "0", 10) || 0;
   } catch (e) {}
@@ -320,6 +324,7 @@
         type: null,
         t: 0,
         upDur: 1,
+        wasHit: false,
         phase: Math.random() * Math.PI * 2
       });
     }
@@ -332,12 +337,16 @@
     streak = 0;
     bestStreak = 0;
     tier = 0;
-    tierFlash = 0;
+    tierFlash = 1.2;
     alive = true;
     tclock = 0;
     shake = 0;
     flashRed = 0;
     spawnTimer = 0.5;
+
+    levelWhacked = 0;
+    levelMisses = 0;
+    levelTimer = TIERS[0].timeLimit;
 
     renderHeartsUI();
     updateHUDUI();
@@ -354,14 +363,22 @@
   }
 
   function updateHUDUI() {
+    var t = TIERS[tier];
     scoreText.textContent = score;
-    var multiplier = Math.min(5, 1 + Math.floor(streak / 5));
-    streakBadge.textContent = multiplier + "x";
-    if (streak > 2) {
-      streakText.textContent = "Streak " + streak + "! 🔥";
+    levelNameText.textContent = "LVL " + t.lvl;
+
+    // Timer display
+    var secondsLeft = Math.max(0, Math.ceil(levelTimer));
+    timerText.textContent = secondsLeft + "s";
+    if (secondsLeft <= 8) {
+      timerPill.classList.add("warning");
     } else {
-      streakText.textContent = "Tap the hamsters!";
+      timerPill.classList.remove("warning");
     }
+
+    // Goal & Misses
+    goalText.textContent = levelWhacked + " / " + t.target;
+    missText.textContent = levelMisses + " / " + t.maxMisses + " 💨";
   }
 
   function burstParticles(x, y, n, color, spread, power) {
@@ -418,16 +435,14 @@
     for (var i = 0; i < holes.length; i++) {
       var h = holes[i];
       
-      // Allow hits when creature is up, rising, or early ducking
       if (h.state !== "up" && h.state !== "rising" && h.state !== "ducking") continue;
-      if (h.state === "ducking" && h.t > 0.08) continue; // Ignore if almost fully subterranean
+      if (h.state === "ducking" && h.t > 0.08) continue;
 
       var cPos = creatureCenter(h);
       var dx = x - cPos.x;
       var dy = y - cPos.y;
       var dist = Math.sqrt(dx * dx + dy * dy);
 
-      // Tuned hit radius matching the visual creature head & body
       var hitRadius = Math.min(cellW, cellH) * 0.46;
 
       if (dist < hitRadius && dist < minDist) {
@@ -440,6 +455,7 @@
 
     hitTarget.state = "hit";
     hitTarget.t = 0;
+    hitTarget.wasHit = true;
 
     if (hitTarget.type === "bad") {
       lives--;
@@ -454,10 +470,12 @@
       updateHUDUI();
 
       if (lives <= 0) {
+        gameOverReason = "Ouch! Sneaky Raccoon bit you! 🦝";
         triggerGameOver();
       }
     } else {
       whacked++;
+      levelWhacked++;
       streak++;
       bestStreak = Math.max(bestStreak, streak);
 
@@ -481,8 +499,32 @@
         shake = Math.max(shake, 0.25);
       }
 
-      updateHUDUI();
+      // Check Level Advancement Goal
+      var t = TIERS[tier];
+      if (levelWhacked >= t.target) {
+        advanceLevel();
+      } else {
+        updateHUDUI();
+      }
     }
+  }
+
+  function advanceLevel() {
+    if (tier < TIERS.length - 1) {
+      tier++;
+    }
+    var newT = TIERS[tier];
+    levelWhacked = 0;
+    levelMisses = 0;
+    levelTimer = newT.timeLimit;
+    tierFlash = 1.4;
+    shake = Math.max(shake, 0.4);
+    sfx.levelUp();
+    burstParticles(W / 2, H * 0.4, 30, "#ffc53d", 60, 5);
+    popups.push({ x: W / 2, y: H * 0.35, life: 1.5, text: "LEVEL CLEARED! 🌟", color: "#73d13d" });
+
+    renderHeartsUI();
+    updateHUDUI();
   }
 
   function triggerGameOver() {
@@ -510,14 +552,21 @@
     tclock += dt;
     var t = TIERS[tier];
 
-    var newTier = tierOf(score);
-    if (newTier > tier) {
-      tier = newTier;
-      tierFlash = 1.2;
-      shake = Math.max(shake, 0.35);
-      sfx.levelUp();
+    // Countdown Level Timer
+    levelTimer -= dt;
+    if (levelTimer <= 0) {
+      levelTimer = 0;
+      if (levelWhacked >= t.target) {
+        advanceLevel();
+      } else {
+        gameOverReason = "Time's Up! Missed level goal! ⏱️";
+        triggerGameOver();
+        return;
+      }
     }
+    updateHUDUI();
 
+    // Spawn animals
     spawnTimer -= dt;
     if (spawnTimer <= 0 && activeCount() < t.maxC) {
       var empties = [];
@@ -528,6 +577,7 @@
         var pickHole = empties[(Math.random() * empties.length) | 0];
         pickHole.state = "rising";
         pickHole.t = 0;
+        pickHole.wasHit = false;
         pickHole.type = pickType(t);
         pickHole.upDur = t.up[0] + Math.random() * (t.up[1] - t.up[0]);
         spawnTimer = t.gap[0] + Math.random() * (t.gap[1] - t.gap[0]);
@@ -536,6 +586,7 @@
       }
     }
 
+    // Update hole animals & check missed escapes
     for (var j = 0; j < holes.length; j++) {
       var h = holes[j];
       h.t += dt;
@@ -547,6 +598,27 @@
         h.state = "ducking";
         h.t = 0;
       } else if (h.state === "ducking" && h.t >= 0.12) {
+        // Check if a normal or gold hamster escaped without being hit
+        if (!h.wasHit && h.type !== "bad") {
+          levelMisses++;
+          sfx.miss();
+          popups.push({ x: h.x, y: h.y - 20, life: 0.8, text: "Escaped! 💨", color: "#ff7a45" });
+
+          if (levelMisses >= t.maxMisses) {
+            lives--;
+            levelMisses = 0;
+            shake = Math.max(shake, 0.5);
+            flashRed = 1;
+            sfx.bad();
+            renderHeartsUI();
+
+            if (lives <= 0) {
+              gameOverReason = "Too many hamsters escaped! 💨";
+              triggerGameOver();
+              return;
+            }
+          }
+        }
         h.state = "empty";
         h.type = null;
       } else if (h.state === "hit" && h.t >= 0.30) {
@@ -744,7 +816,6 @@
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    // Fullscreen backdrop gradient
     var bgGrad = ctx.createLinearGradient(0, 0, 0, vh);
     bgGrad.addColorStop(0, "#91d5ff");
     bgGrad.addColorStop(0.25, "#bae7ff");
@@ -753,28 +824,23 @@
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, vw, vh);
 
-    // Apply scaling and camera screen shake offset
     ctx.setTransform(
       scale, 0, 0, scale,
       offX + (Math.random() - 0.5) * shake * 10 * scale,
       offY + (Math.random() - 0.5) * shake * 10 * scale
     );
 
-    // Playfield wooden board border
     ctx.fillStyle = "#432b16";
     roundRectPath(W * 0.04, gridTop - 25, W * 0.92, (gridBot - gridTop) + 50, 24);
     ctx.fill();
 
-    // Playfield grass/field interior
     ctx.fillStyle = "#5c3c1e";
     roundRectPath(W * 0.05, gridTop - 20, W * 0.9, (gridBot - gridTop) + 40, 20);
     ctx.fill();
 
-    // Draw Holes & Animals
     for (var i = 0; i < holes.length; i++) drawHole(holes[i]);
     for (var j = 0; j < holes.length; j++) drawCreature(holes[j]);
 
-    // Render Particles
     for (var p = 0; p < particles.length; p++) {
       var pt = particles[p];
       ctx.globalAlpha = Math.max(0, pt.life);
@@ -785,7 +851,6 @@
     }
     ctx.globalAlpha = 1;
 
-    // Render Floaters (+1, +5, -1)
     ctx.textAlign = "center";
     ctx.font = "700 20px Fredoka, sans-serif";
     for (var u = 0; u < popups.length; u++) {
@@ -795,13 +860,11 @@
     }
     ctx.globalAlpha = 1;
 
-    // Red Flash Overlay
     if (flashRed > 0) {
       ctx.fillStyle = "rgba(255,77,79," + (flashRed * 0.3) + ")";
       ctx.fillRect(0, 0, W, H);
     }
 
-    // Tier Level Flash Banner
     if (tierFlash > 0) {
       ctx.globalAlpha = Math.min(1, tierFlash * 1.8);
       ctx.font = "700 26px Fredoka, sans-serif";
@@ -876,8 +939,9 @@
       bestScoreText.textContent = String(bestScore);
     }
 
-    var lines = ["Awesome Effort! 🎉", "Super Whacker! 🌟", "So Close! 👍", "Great Job! ⭐"];
+    var lines = ["Nice Try! 🎉", "Good Effort! 🌟", "So Close! 👍", "Great Run! ⭐"];
     overTitle.textContent = lines[(Math.random() * lines.length) | 0];
+    overReasonText.textContent = gameOverReason;
     finalScoreText.textContent = score;
     whackedText.textContent = whacked + " Whacked";
     bestStreakText.textContent = "Streak " + bestStreak;
@@ -917,7 +981,6 @@
     resumeGame();
   });
 
-  // Precise Canvas Coordinate Translation Helper (Supports Pointer, Touch, and Mouse)
   function getCanvasCoords(e) {
     var rect = canvas.getBoundingClientRect();
     var clientX = e.clientX;
@@ -937,7 +1000,6 @@
     };
   }
 
-  // Multi-Touch & Pointer Input Handlers
   if (window.PointerEvent) {
     canvas.addEventListener("pointerdown", function (e) {
       if (state !== STATE_PLAY) return;
@@ -965,7 +1027,6 @@
     });
   }
 
-  // Keyboard controls for Desktop users
   window.addEventListener("keydown", function (e) {
     if ((e.key === " " || e.key === "Enter") && state !== STATE_PLAY && state !== STATE_PAUSED) {
       startGame();

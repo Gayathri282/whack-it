@@ -7,7 +7,7 @@
   <title>Whack It! - Playful Arcade Game</title>
   
   <!-- SEO & Meta -->
-  <meta name="description" content="A super fun, child-friendly Whack-It game! Tap the cute hamsters, collect golden stars, and avoid cheeky raccoons in this colorful full-screen arcade adventure.">
+  <meta name="description" content="A super fun, child-friendly Whack-It game! Tap the cute hamsters, collect golden stars, hit level targets, and avoid cheeky raccoons in this colorful full-screen arcade adventure.">
   <meta name="keywords" content="whack a mole, kids game, html5 game, browser game, mobile game">
   
   <!-- Google Fonts -->
@@ -29,14 +29,28 @@
       <span class="hud-label">SCORE</span>
       <span id="scoreText" class="hud-value">0</span>
     </div>
+
+    <div class="hud-item timer-box">
+      <span class="hud-label" id="levelNameText">LVL 1</span>
+      <div class="timer-pill">
+        <span class="timer-icon">⏱️</span>
+        <span id="timerText" class="timer-value">45s</span>
+      </div>
+    </div>
     
-    <div class="hud-item streak-box">
-      <span id="streakBadge" class="streak-badge">1x</span>
-      <span id="streakText" class="hud-subtext">Tap the hamsters!</span>
+    <div class="hud-item goal-box">
+      <span class="hud-label">GOAL</span>
+      <span id="goalText" class="hud-subvalue">0 / 12</span>
     </div>
 
-    <div class="hud-item lives-box" id="livesContainer">
-      <!-- Dynamic Hearts rendered here -->
+    <div class="hud-item status-box">
+      <div class="lives-box" id="livesContainer">
+        <!-- Dynamic Hearts rendered here -->
+      </div>
+      <div class="miss-box">
+        <span class="miss-label">MISS:</span>
+        <span id="missText" class="miss-value">0/3 💨</span>
+      </div>
     </div>
   </div>
 
@@ -45,7 +59,7 @@
     <div class="game-card bounce-in">
       <div class="card-badge">CUTE & FUN</div>
       <h1 class="game-title">Whack It! 🐹</h1>
-      <p class="game-subtitle">Tap the adorable hamsters as they pop out! Catch golden stars for bonus points, but watch out for sneaky raccoons!</p>
+      <p class="game-subtitle">Tap hamsters before they escape! Reach each level's target before time runs out. Watch out for sneaky raccoons!</p>
 
       <div class="character-preview">
         <div class="preview-item">
@@ -60,6 +74,12 @@
           <div class="char-avatar raccoon-bg">🦝</div>
           <span class="char-label">-1 Heart</span>
         </div>
+      </div>
+
+      <div class="rules-summary">
+        <div class="rule-chip">⏱️ Beat the Level Timer</div>
+        <div class="rule-chip">💨 Don't let 3 Escape</div>
+        <div class="rule-chip">🎯 Reach Target Goal</div>
       </div>
 
       <button class="play-btn" id="startBtn">
@@ -77,6 +97,7 @@
     <div class="game-card pop-in" id="overCard">
       <div class="card-badge orange-badge">GAME OVER</div>
       <h2 class="over-title" id="overTitle">Awesome Effort! 🎉</h2>
+      <p class="over-reason" id="overReasonText">Out of hearts!</p>
       
       <div class="score-display">
         <span class="score-label">FINAL SCORE</span>

@@ -60,17 +60,17 @@ canvas#gameCanvas {
    -------------------------------------------------------------------------- */
 .hud-container {
   position: fixed;
-  top: max(12px, env(safe-area-inset-top));
+  top: max(10px, env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 32px);
-  max-width: 520px;
+  width: calc(100% - 24px);
+  max-width: 540px;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.92);
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 3px solid rgba(255, 255, 255, 0.95);
@@ -96,52 +96,74 @@ canvas#gameCanvas {
 }
 
 .hud-label {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
   color: #8c8c8c;
 }
 
 .hud-value {
-  font-size: clamp(24px, 4vw, 32px);
+  font-size: clamp(20px, 3.5vw, 28px);
   font-weight: 700;
   color: #262626;
   line-height: 1;
   text-shadow: 0 1px 0 #fff;
 }
 
-.streak-box {
-  align-items: center;
+.hud-subvalue {
+  font-size: clamp(14px, 2.8vw, 18px);
+  font-weight: 700;
+  color: #389e0d;
 }
 
-.streak-badge {
-  background: linear-gradient(135deg, var(--accent-yellow), var(--accent-orange));
-  color: #fff;
+/* Timer Pill */
+.timer-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f6ffed;
+  border: 1.5px solid #b7eb8f;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  margin-top: 2px;
+}
+
+.timer-value {
   font-size: 14px;
   font-weight: 700;
-  padding: 3px 12px;
-  border-radius: var(--radius-pill);
-  box-shadow: 0 4px 8px rgba(255, 122, 69, 0.35);
-  display: inline-block;
-  animation: pulseBeat 1.8s infinite ease-in-out;
+  color: #278003;
 }
 
-.hud-subtext {
-  font-size: 11px;
-  font-weight: 600;
-  color: #595959;
-  margin-top: 2px;
+.timer-pill.warning {
+  background: #fff2e8;
+  border-color: #ffbb96;
+  animation: pulseWarning 0.8s infinite ease-in-out;
+}
+
+.timer-pill.warning .timer-value {
+  color: #d4380d;
+}
+
+@keyframes pulseWarning {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+/* Status Box: Hearts & Misses */
+.status-box {
+  align-items: flex-end;
+  gap: 2px;
 }
 
 .lives-box {
   display: flex;
   flex-direction: row;
-  gap: 6px;
+  gap: 4px;
   align-items: center;
 }
 
 .heart-icon {
-  font-size: clamp(20px, 3.5vw, 26px);
+  font-size: clamp(16px, 3vw, 20px);
   display: inline-block;
   filter: drop-shadow(0 2px 4px rgba(255, 77, 79, 0.4));
   transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -150,6 +172,19 @@ canvas#gameCanvas {
 .heart-icon.lost {
   filter: grayscale(1) opacity(0.3);
   transform: scale(0.75);
+}
+
+.miss-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #8c8c8c;
+}
+
+.miss-value {
+  color: #ff4d4f;
 }
 
 /* --------------------------------------------------------------------------
@@ -205,11 +240,6 @@ canvas#gameCanvas {
   100% { opacity: 1; transform: scale(1); }
 }
 
-@keyframes pulseBeat {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
-}
-
 /* Card Badge */
 .card-badge {
   position: absolute;
@@ -249,19 +279,19 @@ canvas#gameCanvas {
 }
 
 .game-subtitle {
-  font-size: clamp(14px, 3vw, 16px);
+  font-size: clamp(13px, 2.8vw, 15px);
   font-weight: 500;
   color: var(--text-muted);
   line-height: 1.45;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 /* Character Preview Bar */
 .character-preview {
   display: flex;
   justify-content: space-around;
-  margin: 18px 0 22px;
-  padding: 12px 8px;
+  margin: 14px 0 16px;
+  padding: 10px 6px;
   background: rgba(240, 245, 255, 0.75);
   border-radius: var(--radius-md);
   border: 1px solid rgba(0, 0, 0, 0.05);
@@ -275,13 +305,13 @@ canvas#gameCanvas {
 }
 
 .char-avatar {
-  width: clamp(40px, 8vw, 48px);
-  height: clamp(40px, 8vw, 48px);
+  width: clamp(38px, 7.5vw, 44px);
+  height: clamp(38px, 7.5vw, 44px);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(20px, 4vw, 24px);
+  font-size: clamp(18px, 3.5vw, 22px);
   box-shadow: 0 4px 10px rgba(0,0,0,0.12);
   border: 2px solid #ffffff;
   transition: transform 0.2s ease;
@@ -296,9 +326,28 @@ canvas#gameCanvas {
 .raccoon-bg { background: linear-gradient(135deg, #d9d9d9, #bfbfbf); }
 
 .char-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--text-dark);
+}
+
+/* Rules Summary Chips */
+.rules-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.rule-chip {
+  background: #f0f5ff;
+  border: 1px solid #adc6ff;
+  color: #1d39c4;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
 }
 
 /* Buttons with Hover & Active States */
@@ -344,8 +393,8 @@ canvas#gameCanvas {
 
 /* Desktop Keyboard Hint */
 .desktop-hint {
-  margin-top: 16px;
-  font-size: 12px;
+  margin-top: 14px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--text-muted);
   opacity: 0.85;
@@ -359,9 +408,9 @@ kbd {
   color: #333;
   display: inline-block;
   font-family: inherit;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 2px 5px;
 }
 
 /* Game Over Card Details */
@@ -369,20 +418,27 @@ kbd {
   font-size: clamp(24px, 5vw, 32px);
   font-weight: 700;
   color: var(--text-dark);
-  margin-top: 10px;
-  margin-bottom: 12px;
+  margin-top: 8px;
+  margin-bottom: 2px;
+}
+
+.over-reason {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ff4d4f;
+  margin-bottom: 10px;
 }
 
 .score-display {
-  margin: 10px 0 16px;
-  padding: 12px;
+  margin: 8px 0 14px;
+  padding: 10px;
   background: linear-gradient(135deg, #fffbe6, #fff1b8);
   border-radius: var(--radius-md);
   border: 2px dashed #ffe58f;
 }
 
 .score-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: #d48806;
   letter-spacing: 0.08em;
@@ -390,7 +446,7 @@ kbd {
 }
 
 .final-score {
-  font-size: clamp(44px, 10vw, 64px);
+  font-size: clamp(40px, 9vw, 58px);
   font-weight: 700;
   color: #ad8b00;
   line-height: 1;
@@ -400,15 +456,15 @@ kbd {
   display: flex;
   gap: 10px;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .stat-pill {
   flex: 1;
   background: #f5f5f5;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-radius: var(--radius-pill);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--text-dark);
   display: flex;
@@ -418,14 +474,14 @@ kbd {
 }
 
 .best-score-banner {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #389e0d;
   background: #f6ffed;
   border: 1px solid #b7eb8f;
-  padding: 8px 14px;
+  padding: 6px 12px;
   border-radius: var(--radius-pill);
-  margin-bottom: 20px;
+  margin-bottom: 18px;
   display: inline-block;
 }
 
@@ -434,7 +490,7 @@ kbd {
    -------------------------------------------------------------------------- */
 @media (min-width: 768px) {
   .hud-container {
-    padding: 12px 28px;
+    padding: 10px 24px;
   }
 
   .game-card {
@@ -444,29 +500,33 @@ kbd {
 
 @media (max-height: 640px) {
   .game-card {
-    padding: 18px 20px;
+    padding: 16px 18px;
   }
 
   .game-title {
-    font-size: 28px;
-    margin-top: 4px;
-    margin-bottom: 4px;
+    font-size: 26px;
+    margin-top: 2px;
+    margin-bottom: 2px;
   }
 
   .game-subtitle {
-    margin-bottom: 12px;
+    margin-bottom: 8px;
   }
 
   .character-preview {
-    margin: 10px 0 14px;
-    padding: 8px;
+    margin: 8px 0 10px;
+    padding: 6px;
+  }
+
+  .rules-summary {
+    margin-bottom: 12px;
   }
 
   .play-btn {
-    padding: 12px 20px;
+    padding: 10px 18px;
   }
 
   .desktop-hint {
-    margin-top: 10px;
+    margin-top: 8px;
   }
 }
