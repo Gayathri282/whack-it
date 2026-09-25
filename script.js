@@ -1,6 +1,6 @@
 /**
  * Whack It! - Child Friendly Fullscreen Web Game Engine
- * Combined Mode: Level Countdown Timer + Missed Hamster Escape Penalties + Raccoon Bombs.
+ * Features: 3 Consecutive Misses Penalty, Level Countdown Timer, Raccoon Bombs.
  */
 
 (function () {
@@ -256,14 +256,14 @@
   };
 
   /* --------------------------------------------------------------------------
-     4. Level Tiers & Combined Mode Goals
+     4. Level Tiers & Goals
      -------------------------------------------------------------------------- */
   var TIERS = [
-    { lvl: 1, name: "Sunny Meadow 🌱", target: 12, timeLimit: 45, maxMisses: 3, gap: [0.85, 1.3],  up: [1.1, 1.4], maxC: 1, bad: 0.1,  gold: 0.12 },
-    { lvl: 2, name: "Bouncy Burrow 🐰", target: 20, timeLimit: 40, maxMisses: 3, gap: [0.68, 1.05], up: [0.95, 1.2], maxC: 2, bad: 0.14, gold: 0.12 },
-    { lvl: 3, name: "Starry Park ⭐",   target: 28, timeLimit: 35, maxMisses: 3, gap: [0.52, 0.85], up: [0.75, 1.0], maxC: 2, bad: 0.18, gold: 0.14 },
-    { lvl: 4, name: "Rainbow Rush 🌈", target: 36, timeLimit: 30, maxMisses: 3, gap: [0.42, 0.70], up: [0.60, 0.85], maxC: 3, bad: 0.22, gold: 0.15 },
-    { lvl: 5, name: "Super Whack! ⚡", target: 45, timeLimit: 25, maxMisses: 3, gap: [0.32, 0.55], up: [0.48, 0.70], maxC: 3, bad: 0.25, gold: 0.15 }
+    { lvl: 1, name: "Sunny Meadow 🌱", target: 12, timeLimit: 45, maxConsecutiveMisses: 3, gap: [0.85, 1.3],  up: [1.1, 1.4], maxC: 1, bad: 0.1,  gold: 0.12 },
+    { lvl: 2, name: "Bouncy Burrow 🐰", target: 20, timeLimit: 40, maxConsecutiveMisses: 3, gap: [0.68, 1.05], up: [0.95, 1.2], maxC: 2, bad: 0.14, gold: 0.12 },
+    { lvl: 3, name: "Starry Park ⭐",   target: 28, timeLimit: 35, maxConsecutiveMisses: 3, gap: [0.52, 0.85], up: [0.75, 1.0], maxC: 2, bad: 0.18, gold: 0.14 },
+    { lvl: 4, name: "Rainbow Rush 🌈", target: 36, timeLimit: 30, maxConsecutiveMisses: 3, gap: [0.42, 0.70], up: [0.60, 0.85], maxC: 3, bad: 0.22, gold: 0.15 },
+    { lvl: 5, name: "Super Whack! ⚡", target: 45, timeLimit: 25, maxConsecutiveMisses: 3, gap: [0.32, 0.55], up: [0.48, 0.70], maxC: 3, bad: 0.25, gold: 0.15 }
   ];
 
   /* --------------------------------------------------------------------------
@@ -294,10 +294,10 @@
   var flashRed = 0;
   var spawnTimer = 0;
 
-  // Combined Mode Level Variables
+  // Level & Consecutive Miss Variables
   var levelTimer = 45;
   var levelWhacked = 0;
-  var levelMisses = 0;
+  var consecutiveMisses = 0; // Resets to 0 whenever a hamster is hit!
   var gameOverReason = "Out of hearts! 💔";
 
   try {
@@ -345,7 +345,7 @@
     spawnTimer = 0.5;
 
     levelWhacked = 0;
-    levelMisses = 0;
+    consecutiveMisses = 0;
     levelTimer = TIERS[0].timeLimit;
 
     renderHeartsUI();
@@ -367,7 +367,6 @@
     scoreText.textContent = score;
     levelNameText.textContent = "LVL " + t.lvl;
 
-    // Timer display
     var secondsLeft = Math.max(0, Math.ceil(levelTimer));
     timerText.textContent = secondsLeft + "s";
     if (secondsLeft <= 8) {
@@ -376,9 +375,8 @@
       timerPill.classList.remove("warning");
     }
 
-    // Goal & Misses
     goalText.textContent = levelWhacked + " / " + t.target;
-    missText.textContent = levelMisses + " / " + t.maxMisses + " 💨";
+    missText.textContent = consecutiveMisses + " / " + t.maxConsecutiveMisses + " 💨";
   }
 
   function burstParticles(x, y, n, color, spread, power) {
@@ -479,6 +477,9 @@
       streak++;
       bestStreak = Math.max(bestStreak, streak);
 
+      // RESET CONSECUTIVE MISS STREAK ON SUCCESSFUL HIT!
+      consecutiveMisses = 0;
+
       var bonus = Math.floor(streak / 5) * 2;
       if (hitTarget.type === "gold") {
         var addedGold = 5 + bonus;
@@ -499,7 +500,6 @@
         shake = Math.max(shake, 0.25);
       }
 
-      // Check Level Advancement Goal
       var t = TIERS[tier];
       if (levelWhacked >= t.target) {
         advanceLevel();
@@ -515,7 +515,7 @@
     }
     var newT = TIERS[tier];
     levelWhacked = 0;
-    levelMisses = 0;
+    consecutiveMisses = 0;
     levelTimer = newT.timeLimit;
     tierFlash = 1.4;
     shake = Math.max(shake, 0.4);
@@ -586,7 +586,7 @@
       }
     }
 
-    // Update hole animals & check missed escapes
+    // Update hole animals & track 3 CONSECUTIVE misses
     for (var j = 0; j < holes.length; j++) {
       var h = holes[j];
       h.t += dt;
@@ -598,22 +598,24 @@
         h.state = "ducking";
         h.t = 0;
       } else if (h.state === "ducking" && h.t >= 0.12) {
-        // Check if a normal or gold hamster escaped without being hit
+        // Check if a normal or gold hamster escaped unhit
         if (!h.wasHit && h.type !== "bad") {
-          levelMisses++;
+          consecutiveMisses++;
           sfx.miss();
-          popups.push({ x: h.x, y: h.y - 20, life: 0.8, text: "Escaped! 💨", color: "#ff7a45" });
+          popups.push({ x: h.x, y: h.y - 20, life: 0.8, text: "Missed! (" + consecutiveMisses + "/3) 💨", color: "#ff7a45" });
 
-          if (levelMisses >= t.maxMisses) {
+          // 3 CONSECUTIVE MISSES PENALTY
+          if (consecutiveMisses >= t.maxConsecutiveMisses) {
             lives--;
-            levelMisses = 0;
-            shake = Math.max(shake, 0.5);
+            consecutiveMisses = 0;
+            shake = Math.max(shake, 0.6);
             flashRed = 1;
             sfx.bad();
+            popups.push({ x: h.x, y: h.y - 38, life: 1.2, text: "3 Misses in a row! -1 Heart 💔", color: "#ff4d4f" });
             renderHeartsUI();
 
             if (lives <= 0) {
-              gameOverReason = "Too many hamsters escaped! 💨";
+              gameOverReason = "3 Consecutive Misses! 💨";
               triggerGameOver();
               return;
             }
@@ -652,9 +654,7 @@
     spawnTimer -= dt;
     if (spawnTimer <= 0 && activeCount() < 1) {
       var empties = [];
-      for (var i = 0; i < holes.length; i++) {
-        if (holes[i].state === "empty") empties.push(holes[i]);
-      }
+      for (var i = 0; i < holes.length; i++) if (holes[i].state === "empty") empties.push(holes[i]);
       if (empties.length > 0) {
         var h = empties[(Math.random() * empties.length) | 0];
         h.state = "rising";
@@ -965,7 +965,6 @@
     lastTs = 0;
   }
 
-  // Event Listeners for UI Buttons
   startBtn.addEventListener("click", function (e) {
     e.stopPropagation();
     startGame();
