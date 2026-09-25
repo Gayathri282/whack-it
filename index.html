@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#4CAF50">
+  <title>Whack It! - Playful Arcade Game</title>
+  
+  <!-- SEO & Meta -->
+  <meta name="description" content="A super fun, child-friendly Whack-It game! Tap the cute hamsters, collect golden stars, and avoid cheeky raccoons in this colorful full-screen arcade adventure.">
+  <meta name="keywords" content="whack a mole, kids game, html5 game, browser game, mobile game">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Fullscreen Canvas -->
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- HUD Overlay (Visible during play) -->
+  <div id="hud" class="hud-container hidden">
+    <div class="hud-item score-box">
+      <span class="hud-label">SCORE</span>
+      <span id="scoreText" class="hud-value">0</span>
+    </div>
+    
+    <div class="hud-item streak-box">
+      <span id="streakBadge" class="streak-badge">1x</span>
+      <span id="streakText" class="hud-subtext">Tap the hamsters!</span>
+    </div>
+
+    <div class="hud-item lives-box" id="livesContainer">
+      <!-- Dynamic Hearts rendered here -->
+    </div>
+  </div>
+
+  <!-- Start Screen Overlay -->
+  <div class="overlay-layer" id="titleScreen">
+    <div class="game-card bounce-in">
+      <div class="card-badge">CUTE & FUN</div>
+      <h1 class="game-title">Whack It! 🐹</h1>
+      <p class="game-subtitle">Tap the adorable hamsters as they pop out! Catch golden stars for bonus points, but watch out for sneaky raccoons!</p>
+
+      <div class="character-preview">
+        <div class="preview-item">
+          <div class="char-avatar hamster-bg">🐹</div>
+          <span class="char-label">+1 Point</span>
+        </div>
+        <div class="preview-item">
+          <div class="char-avatar gold-bg">⭐</div>
+          <span class="char-label">+5 Golden</span>
+        </div>
+        <div class="preview-item">
+          <div class="char-avatar raccoon-bg">🦝</div>
+          <span class="char-label">-1 Heart</span>
+        </div>
+      </div>
+
+      <button class="play-btn" id="startBtn">
+        <span>PLAY NOW! 🚀</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Game Over Overlay -->
+  <div class="overlay-layer hidden" id="gameOverScreen">
+    <div class="game-card pop-in" id="overCard">
+      <div class="card-badge orange-badge">GAME OVER</div>
+      <h2 class="over-title" id="overTitle">Awesome Effort! 🎉</h2>
+      
+      <div class="score-display">
+        <span class="score-label">FINAL SCORE</span>
+        <span class="final-score" id="finalScoreText">0</span>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-pill">
+          <span class="stat-icon">🎯</span>
+          <span id="whackedText">0 Whacked</span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-icon">🔥</span>
+          <span id="bestStreakText">Streak 0</span>
+        </div>
+      </div>
+
+      <div class="best-score-banner" id="bestBanner">
+        🏆 Best Score: <span id="bestScoreText">0</span>
+      </div>
+
+      <button class="play-btn again-btn" id="againBtn">
+        <span>PLAY AGAIN 🔄</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Pause Overlay -->
+  <div class="overlay-layer hidden" id="pauseScreen">
+    <div class="game-card pop-in">
+      <div class="card-badge blue-badge">PAUSED</div>
+      <h2 class="game-title">Game Paused ⏸️</h2>
+      <p class="game-subtitle">Taking a quick break? The hamsters are waiting!</p>
+
+      <button class="play-btn" id="resumeBtn">
+        <span>RESUME GAME ▶️</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Game Engine Script -->
+  <script src="script.js"></script>
+</body>
+</html>
